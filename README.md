@@ -66,8 +66,8 @@
 
 ### 1. Клонирование репозитория
 ```bash
-git clone https://github.com/Chlorinesa/vending-maintenance-system.git
-cd vending-maintenance-system
+git clone https://github.com/Ksorarenn/franchaiserWeb.git
+cd franchaiserWeb
 ```
 
 ### 2. Настройка базы данных
@@ -77,9 +77,9 @@ cd vending-maintenance-system
 Пример подключения через `sqlcmd` или SQL Server Management Studio.
 
 ### 3. Настройка бэкенда (Flask)
-Перейдите в папку `backend/`:
+Перейдите в папку `API5/`:
 ```bash
-cd backend
+cd API5
 ```
 
 Создайте виртуальное окружение и установите зависимости:
@@ -91,7 +91,7 @@ pip install -r requirements.txt
 ```
 
 #### Файл конфигурации
-Создайте файл `config.py` (или переименуйте `config.example.py`) со следующими параметрами:
+Создайте файл `db.py`со следующими параметрами:
 ```python
 # config.py
 DB_DRIVER = 'ODBC Driver 17 for SQL Server'
@@ -107,12 +107,12 @@ python app.py
 ```
 По умолчанию сервер будет доступен по адресу `http://localhost:5000`.  
 API-эндпоинты:
-- `POST /api/login` – авторизация
-- `GET /api/vendingmachines` – список аппаратов
-- `POST /api/vendingmachines` – добавление аппарата (в т.ч. из CSV)
+- `POST /api/Login` – авторизация
+- `GET /api/VendingMachines` – список аппаратов
+- `POST /api/vendingMachines` – добавление аппарата (в т.ч. из CSV)
 - `GET /api/maintenance` – записи ТО
 - `POST /api/maintenance` – создание записи ТО
-- `GET /api/users` – список пользователей
+- `GET /api/Users` – список пользователей
 - и другие (см. документацию API)
 
 ### 4. Настройка фронтенда
@@ -150,18 +150,16 @@ Location,Model,PaymentTypeID,SerialNumber,InventoryNumber,Manufacturer,Manufactu
 Все поля должны соответствовать типам данных в базе.
 
 ### Настройка подключения к SQL Server
-Параметры подключения задаются в `config.py` на бэкенде. Убедитесь, что используется правильный ODBC-драйвер. Список установленных драйверов можно получить командой:
+Параметры подключения задаются в `db.py` на бэкенде. Убедитесь, что используется правильный ODBC-драйвер. Список установленных драйверов можно получить командой:
 ```python
 import pyodbc
 print(pyodbc.drivers())
 ```
 
 ## Безопасность
-- Пароли пользователей хранятся в хэшированном виде (bcrypt)
 - Защита от SQL-инъекций через параметризованные запросы в pyodbc
 - Валидация всех входных данных на стороне клиента и сервера
 - Сессионное управление аутентификацией (или JWT)
-- Конфиденциальные данные (пароли БД) хранятся в `config.py`, который не коммитится в репозиторий (добавлен в `.gitignore`)
 - При работе в демо-режиме все операции выполняются локально в памяти браузера, никакие данные не отправляются на сервер
 
 ## Поддерживаемые браузеры
