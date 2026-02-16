@@ -1,0 +1,2 @@
+Location,Model,PaymentTypeID,FullIncome,SerialNumber,InventoryNumber,Manufacturer,ManufactureDate,DateOfCommissioning,LastVerificationDate,VerificationInterval,ResourceHours,DateOfNextFixing,MaintenanceTimeHours,MachineStatusID,CountryID,InventoryDate,LastCheckedByUserID
+"г. Москва, ул. Тверская, д. 1",CoffeeMaster Pro,2,1500000,SN001,INV001,ООО КофеМастер,2024-01-15,2024-02-01,2024-06-01,6,2000,2026-06-01,4,1,1,2024-02-01,2

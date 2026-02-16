@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Автоматизация обслуживания ТА</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Уведомления -->
+    <div id="notification" class="notification"></div>
+    
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <span>⚙️ Автоматизация обслуживания ТА</span>
+                </div>
+                <div class="user-info">
+                    <span id="current-user">Франчайзер: Загрузка...</span>
+                    <button id="logout-btn">Выйти</button>
+                </div>
+            </div>
+            
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="#" id="menu-ta" class="active">Торговые аппараты</a></li>
+                    <li><a href="#" id="menu-calendar">Календарь обслуживания</a></li>
+                    <li><a href="#" id="menu-schedule">График работ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="main-content">
+            <!-- Раздел Торговые аппараты -->
+            <div id="ta-content" class="page-content">
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 class="page-title">Торговые аппараты</h2>
+                    <button id="add-vm-btn">Добавить аппарат</button>
+                </div>
+                
+                <div class="upload-section">
+                    <h3>Загрузка данных из CSV файла</h3>
+                    <p>Поддерживаемые поля: Location, Model, PaymentTypeID, SerialNumber, InventoryNumber, Manufacturer, ManufactureDate, DateOfCommissioning, LastVerificationDate, VerificationInterval, ResourceHours, DateOfNextFixing, MaintenanceTimeHours, MachineStatusID, CountryID, InventoryDate, LastCheckedByUserID</p>
+                    
+                    <input type="file" id="csv-file" accept=".csv" style="display: none;">
+                    <button id="upload-btn" class="upload-button">Выбрать файл CSV</button>
+                    
+                    <div class="file-info" id="file-info">
+                        <strong>Выбран файл:</strong> <span id="file-name"></span> (<span id="file-size"></span>)
+                    </div>
+                    
+                    <button id="process-btn" class="upload-button" disabled>Загрузить данные</button>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Проверка и загрузка данных...</p>
+                </div>
+                
+                <div class="validation-errors" id="validation-errors">
+                    <h4>Обнаружены ошибки в данных:</h4>
+                    <ul class="error-list" id="error-list"></ul>
+                    <p>Исправьте ошибки и попробуйте загрузить файл снова.</p>
+                </div>
+                
+                <div class="success-message" id="success-message">
+                    <p>✅ Данные успешно загружены! Обработано записей: <span id="processed-count">0</span></p>
+                </div>
+                
+                <div class="error-message" id="error-message">
+                    <p id="error-text"></p>
+                </div>
+                
+                <div class="table-container">
+                    <h3>Список торговых аппаратов</h3>
+                    <table id="ta-table">
+                        <thead>
+                            <tr>
+                                <th>№</th>
+                                <th>Местоположение</th>
+                                <th>Модель</th>
+                                <th>Тип оплаты</th>
+                                <th>Доход</th>
+                                <th>Статус</th>
+                                <th>Страна</th>
+                                <th>Последняя проверка</th>
+                                <th>Следующее ТО</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ta-table-body">
+                            <!-- Данные загружаются динамически -->
+                            <tr><td colspan="10" style="text-align: center;">Загрузка данных...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Раздел Календарь обслуживания -->
+            <div id="calendar-content" class="page-content" style="display: none;">
+                <h2 class="page-title">Календарь обслуживания</h2>
+                
+                <div class="calendar-controls">
+                    <div class="view-selector">
+                        <button id="view-all" class="active">Все ТА</button>
+                        <button id="view-single">Один ТА</button>
+                    </div>
+                    
+                    <div class="ta-filter" id="ta-filter" style="display: none;">
+                        <label for="ta-select">Выберите ТА:</label>
+                        <select id="ta-select">
+                            <option value="">-- Выберите ТА --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="period-selector">
+                        <!-- <select id="period-select">
+                            <option value="year">Год</option>
+                            <option value="month">Месяц</option>
+                            <option value="week">Неделя</option>
+                        </select> -->
+                    </div>
+                </div>
+                
+                <div class="legend">
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 20px; height: 20px; background-color: #27ae60; border-radius: 4px;"></div>
+                            <span>Плановое ТО</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 20px; height: 20px; background-color: #f1c40f; border-radius: 4px;"></div>
+                            <span>Приближающийся срок (&lt;5 дней)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 20px; height: 20px; background-color: #e74c3c; border-radius: 4px;"></div>
+                            <span>Просроченные ТО</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="calendar-view" id="calendar-view">
+                    <div class="loading" id="calendar-loading">
+                        <div class="spinner"></div>
+                        <p>Загрузка календаря...</p>
+                    </div>
+                    <div id="calendar-container" style="display: none;">
+                        <div id="year-view" class="year-calendar" style="display: none;">
+                            <!-- 12 months will be generated here -->
+                        </div>
+                        <div id="month-view" class="month-container" style="display: none;">
+                            <div class="month-title" id="current-month-title">Февраль 2026</div>
+                            <div class="month-grid" id="month-grid">
+                                <!-- Days will be generated here -->
+                            </div>
+                        </div>
+                        <div id="week-view" style="display: none;">
+                            <div class="week-container">
+                                <div class="week-title" id="current-week-title">Неделя 6, 2026</div>
+                                <div class="week-grid" id="week-grid">
+                                    <!-- Week days will be generated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Раздел График работ -->
+            <div id="schedule-content" class="page-content" style="display: none;">
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 class="page-title">График работ</h2>
+                    <div>
+                        <!-- <button id="create-request-btn">Создать заявку</button> -->
+                        <button id="add-maintenance-btn" style="margin-left: 10px;">Добавить ТО</button>
+                    </div>
+                </div>
+                
+                <div class="work-schedule-controls">
+                    <div>
+                        <!-- <label for="schedule-period">Период:</label>
+                        <select id="schedule-period">
+                            <option value="week">Неделя</option>
+                            <option value="month">Месяц</option>
+                        </select> -->
+                    </div>
+                </div>
+                
+                <div class="employee-schedule" id="employee-schedule">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Загрузка расписания...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно добавления торгового аппарата -->
+    <div class="modal" id="add-vm-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Добавить торговый аппарат</h3>
+                <button class="close-modal" onclick="hideModal('add-vm-modal')">×</button>
+            </div>
+            
+            <form id="add-vm-form">
+                <div class="form-group">
+                    <label for="vm-location">Местоположение:</label>
+                    <input type="text" id="vm-location" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vm-model">Модель:</label>
+                    <input type="text" id="vm-model" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="vm-payment-type">Тип оплаты:</label>
+                        <select id="vm-payment-type" required>
+                            <option value="">-- Выберите тип оплаты --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="vm-status">Статус:</label>
+                        <select id="vm-status" required>
+                            <option value="">-- Выберите статус --</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="vm-country">Страна:</label>
+                        <select id="vm-country" required>
+                            <option value="">-- Выберите страну --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="vm-user">Проверяющий:</label>
+                        <select id="vm-user" required>
+                            <option value="">-- Выберите пользователя --</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="vm-serial">Серийный номер:</label>
+                        <input type="text" id="vm-serial" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="vm-inventory">Инвентарный номер:</label>
+                        <input type="text" id="vm-inventory" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vm-manufacturer">Производитель:</label>
+                    <input type="text" id="vm-manufacturer" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="vm-manufacture-date">Дата производства:</label>
+                        <input type="date" id="vm-manufacture-date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="vm-commission-date">Дата ввода в эксплуатацию:</label>
+                        <input type="date" id="vm-commission-date" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vm-income">Общий доход:</label>
+                    <input type="number" id="vm-income" step="0.01" value="0">
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" onclick="hideModal('add-vm-modal')">Отмена</button>
+                    <button type="submit">Добавить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Модальное окно создания заявки на обслуживание -->
+    <div class="modal" id="create-request-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Создание заявки на обслуживание</h3>
+                <button class="close-modal" onclick="hideModal('create-request-modal')">×</button>
+            </div>
+            
+            <form id="create-request-form">
+                <div class="form-group">
+                    <label for="request-ta">Торговый аппарат:</label>
+                    <select id="request-ta" required>
+                        <option value="">-- Выберите ТА --</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="request-type">Тип заявки:</label>
+                        <select id="request-type">
+                            <option value="service">Плановое обслуживание</option>
+                            <option value="emergency">Авария</option>
+                            <option value="monitoring">Мониторинг</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="request-date">Дата:</label>
+                        <input type="date" id="request-date" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="request-description">Описание:</label>
+                    <textarea id="request-description" rows="3" placeholder="Детали заявки..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="request-problems">Проблемы:</label>
+                    <textarea id="request-problems" rows="2" placeholder="Выявленные проблемы..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="request-employee">Исполнитель:</label>
+                    <select id="request-employee" required>
+                        <option value="">-- Выберите исполнителя --</option>
+                    </select>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" onclick="hideModal('create-request-modal')">Отмена</button>
+                    <button type="submit">Создать заявку</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Модальное окно добавления ТО -->
+    <div class="modal" id="add-maintenance-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Добавить техническое обслуживание</h3>
+                <button class="close-modal" onclick="hideModal('add-maintenance-modal')">×</button>
+            </div>
+            
+            <form id="add-maintenance-form">
+                <div class="form-group">
+                    <label for="maintenance-ta">Торговый аппарат:</label>
+                    <select id="maintenance-ta" required>
+                        <option value="">-- Выберите ТА --</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="maintenance-date">Дата ТО:</label>
+                        <input type="date" id="maintenance-date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="maintenance-employee">Исполнитель:</label>
+                        <select id="maintenance-employee" required>
+                            <option value="">-- Выберите исполнителя --</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="maintenance-description">Описание работ:</label>
+                    <textarea id="maintenance-description" rows="3" placeholder="Описание выполненных работ..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="maintenance-problems">Выявленные проблемы:</label>
+                    <textarea id="maintenance-problems" rows="2" placeholder="Выявленные проблемы..."></textarea>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" onclick="hideModal('add-maintenance-modal')">Отмена</button>
+                    <button type="submit">Добавить ТО</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Модальное окно входа -->
+    <div class="modal" id="login-modal" style="display: flex; background-color: rgba(0,0,0,0.8);">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Вход в систему</h3>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email:</label>
+                    <input type="text" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Пароль:</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit">Войти</button>
+                </div>
+            </form>
+            <div id="login-error" style="color: red; margin-top: 10px; display: none;"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
